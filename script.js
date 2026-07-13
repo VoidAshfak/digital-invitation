@@ -4,6 +4,30 @@
 (function () {
   'use strict';
 
+  /* ═══════════════════════════════════════════════════
+     TELEGRAM DELIVERY — fill these two in.
+
+     1. Open Telegram, message @BotFather, send /newbot, follow the
+        prompts. It replies with a token like 123456789:AAE...xyz.
+     2. Open a chat with YOUR OWN new bot and send it any message
+        (a bot cannot write to you until you have written to it —
+        this is why a @username alone is not enough).
+     3. Visit, in any browser:
+          https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
+        Find "chat":{"id":123456789 — that number is CHAT_ID.
+
+     ⚠ This token ships to every guest's browser and is readable in
+     DevTools. Anyone who finds it can post as this bot or spam you.
+     Use a bot created ONLY for this invitation, never a bot with
+     access to anything else, and revoke it via @BotFather after the
+     wedding. If it gets abused, /revoke in BotFather kills it.
+     ═══════════════════════════════════════════════════ */
+  var TELEGRAM = {
+    token: '8982970902:AAH49l384z3HthSib2A-7be2sIt9WhEqAYA',
+    chatId: '1949127313',
+    enabled: function () { return this.token && this.chatId; }
+  };
+
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ── Cover: open the invitation ────────────────── */
@@ -192,7 +216,7 @@
       submittedAt: new Date().toISOString()
     };
 
-    // No backend yet — keep the response locally so nothing is lost.
+    // Keep a local copy regardless — Telegram is delivery, not storage.
     try {
       var all = JSON.parse(localStorage.getItem('nikah-rsvp') || '[]');
       all.push(entry);
@@ -200,6 +224,8 @@
     } catch (err) {
       /* storage unavailable — still show the confirmation */
     }
+
+    sendToTelegram(entry);
 
     var accepted = entry.attendance === 'Joyfully Accepts';
     var first = escapeHtml(entry.name.split(' ')[0]);
@@ -218,6 +244,64 @@
       '</div>';
     form.querySelector('.thanks').scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
   });
+
+  /* ── Telegram ──────────────────────────────────────
+     Fire-and-forget: the guest sees their confirmation whether or not
+     the message lands. Anything that fails to send stays queued in
+     localStorage under 'nikah-rsvp-unsent' so nothing is ever lost.
+     ─────────────────────────────────────────────────── */
+  function sendToTelegram(entry) {
+    if (!TELEGRAM.enabled()) {
+      queueUnsent(entry);
+      return Promise.resolve(false);
+    }
+
+    var lines = [
+      '🕌 *New RSVP — Nikah in Madinah*',
+      '',
+      '*Name:* ' + tgEscape(entry.name),
+      '*Attendance:* ' + (entry.attendance === 'Joyfully Accepts' ? '✅ Joyfully Accepts' : '🤍 With Regret'),
+      '*Phone:* ' + (entry.phone ? tgEscape(entry.phone) : '—'),
+      '*Message:* ' + (entry.message ? tgEscape(entry.message) : '—'),
+      '',
+      '_' + new Date(entry.submittedAt).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh' }) + ' (Madinah time)_'
+    ];
+
+    return fetch('https://api.telegram.org/bot' + TELEGRAM.token + '/sendMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TELEGRAM.chatId,
+        text: lines.join('\n'),
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true
+      })
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.description || 'Telegram rejected the message');
+        return true;
+      })
+      .catch(function (err) {
+        // Never surface this to the guest — it is our problem, not theirs.
+        console.warn('RSVP not delivered to Telegram:', err.message);
+        queueUnsent(entry);
+        return false;
+      });
+  }
+
+  function queueUnsent(entry) {
+    try {
+      var q = JSON.parse(localStorage.getItem('nikah-rsvp-unsent') || '[]');
+      q.push(entry);
+      localStorage.setItem('nikah-rsvp-unsent', JSON.stringify(q));
+    } catch (err) { /* storage unavailable */ }
+  }
+
+  /* Telegram's Markdown parser breaks on these if a guest types them. */
+  function tgEscape(str) {
+    return String(str).replace(/([_*`\[\]])/g, '\\$1');
+  }
 
   function escapeHtml(str) {
     var div = document.createElement('div');
