@@ -66,6 +66,13 @@ html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
 img,svg{ display:block; max-width:100%; }
 button,input,textarea{ font:inherit; color:inherit; }
 
+/* Oversized-and-offset images: the reset's max-width:100% would clamp their
+   width back to the frame and open a gap on the trailing edge. */
+.frame__img,
+.spread__img,
+.strip__img,
+.bleed__img{ max-width:none; }
+
 body{
   background:var(--bg);
   color:var(--ink);
