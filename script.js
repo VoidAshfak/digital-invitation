@@ -24,7 +24,7 @@
      ═══════════════════════════════════════════════════ */
   var TELEGRAM = {
     token: '8982970902:AAH49l384z3HthSib2A-7be2sIt9WhEqAYA',
-    chatId: '1949127313',
+    chatId: '1333219193',
     enabled: function () { return this.token && this.chatId; }
   };
 
