@@ -1070,10 +1070,14 @@ body.is-locked{ overflow:hidden; }
   margin-top:18px;
   font-size:11px;
   font-weight:400;
-  letter-spacing:.28em;
+  /* Tracking is the whole cost here: at .28em the Hijri line runs past a
+     360px viewport and breaks. .1em keeps the editorial feel and one line. */
+  letter-spacing:.1em;
   text-transform:uppercase;
   color:var(--ink-faint);
+  white-space:nowrap;
 }
+.finale__sep{ margin:0 .5em; color:var(--champagne); }
 .finale__tags{
   margin-top:26px;
   font-size:13px;
