@@ -267,14 +267,19 @@
       '_' + new Date(entry.submittedAt).toLocaleString('en-GB', { timeZone: 'Asia/Riyadh' }) + ' (Madinah time)_'
     ];
 
+    /* Form-encoded, and deliberately so. A JSON Content-Type is not
+       CORS-safelisted, so the browser sends an OPTIONS preflight first —
+       and api.telegram.org answers preflights with 501, so the request
+       never leaves the page. URLSearchParams keeps it a "simple request":
+       no preflight, and Telegram's Access-Control-Allow-Origin:* lets the
+       response through. Do not set a Content-Type header here. */
     return fetch('https://api.telegram.org/bot' + TELEGRAM.token + '/sendMessage', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: new URLSearchParams({
         chat_id: TELEGRAM.chatId,
         text: lines.join('\n'),
         parse_mode: 'Markdown',
-        disable_web_page_preview: true
+        disable_web_page_preview: 'true'
       })
     })
       .then(function (res) { return res.json(); })
