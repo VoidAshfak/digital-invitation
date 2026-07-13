@@ -23,7 +23,7 @@
      wedding. If it gets abused, /revoke in BotFather kills it.
      ═══════════════════════════════════════════════════ */
   var TELEGRAM = {
-    token: '8982970902:AAH49l384z3HthSib2A-7be2sIt9WhEqAYA',
+    token: '8861207321:AAEYbGMzqruoxELckdPEQdtNlBA5X29c1S0',
     chatId: '1333219193',
     enabled: function () { return this.token && this.chatId; }
   };
